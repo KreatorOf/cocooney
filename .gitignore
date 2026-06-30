@@ -31,10 +31,15 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
 
 # typescript
 *.tsbuildinfo
+
+# Claude local state
+.claude/budget-claude-backup/
+.claude/settings.local.json
 
 example
 

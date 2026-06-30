@@ -1,16 +1,20 @@
 {
   "expo": {
-    "name": "budget",
-    "slug": "budget",
+    "name": "Cocooney",
+    "slug": "cocooney",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "budget",
+    "scheme": "cocooney",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.matthiascadet.cocooney",
+      "appleTeamId": "4N5T33BN66",
+      "usesAppleSignIn": true
     },
     "android": {
+      "package": "com.matthiascadet.cocooney",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -34,7 +38,23 @@
             "imageWidth": 76
           }
         }
-      ]
+      ],
+      "expo-apple-authentication",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.PLACEHOLDER-A-REMPLACER-PHASE-4"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ],
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,
