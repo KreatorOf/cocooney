@@ -21,6 +21,7 @@ import type {
   Subscription,
   Transaction,
 } from '@/domain/types';
+import { creditTotalCost } from '@/domain/selectors';
 import { syncBridge } from '@/lib/syncBridge';
 import { addMonths, monthKey } from '@/utils/date';
 
@@ -60,6 +61,7 @@ export interface NewCreditInput {
   paidAmountCents: number;
   monthlyPaymentCents: number;
   dayOfMonth: number;
+  interestRatePct: number;
   endDate: string;
   icon: string;
   color: string;
@@ -294,6 +296,7 @@ export const useBudgetStore = create<BudgetState>()(
           paidAmountCents: Math.max(0, Math.abs(input.paidAmountCents)),
           monthlyPaymentCents: Math.abs(input.monthlyPaymentCents),
           dayOfMonth: Math.min(31, Math.max(1, input.dayOfMonth)),
+          interestRatePct: Math.max(0, input.interestRatePct),
           endDate: input.endDate,
           icon: input.icon,
           color: input.color,
@@ -324,7 +327,7 @@ export const useBudgetStore = create<BudgetState>()(
         const updated: Credit = {
           ...credit,
           paidAmountCents: Math.min(
-            credit.totalAmountCents,
+            creditTotalCost(credit),
             credit.paidAmountCents + credit.monthlyPaymentCents,
           ),
         };

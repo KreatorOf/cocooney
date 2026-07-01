@@ -9,6 +9,7 @@ create table if not exists credits (
   paid_amount_cents     bigint not null default 0,       -- déjà remboursé (restant = total - paid)
   monthly_payment_cents bigint not null,                 -- mensualité
   day_of_month          int not null check (day_of_month between 1 and 31),
+  interest_rate_pct     numeric not null default 0,      -- taux d'emprunt annuel (%)
   end_date              date not null,                   -- échéance (dernier prélèvement)
   icon                  text not null default 'card',
   color                 text not null default '#6457F9',
@@ -21,6 +22,9 @@ create table if not exists credits (
 );
 
 create index if not exists idx_credit_household on credits(household_id);
+
+-- Upgrade idempotent si la table existait déjà (taux d'emprunt).
+alter table credits add column if not exists interest_rate_pct numeric not null default 0;
 
 alter table credits enable row level security;
 
@@ -41,4 +45,10 @@ create policy "credits_update" on credits for update
 create policy "credits_delete" on credits for delete
   using (household_id = auth_household_id() and (scope = 'shared' or owner_id = auth.uid()));
 
-alter publication supabase_realtime add table credits;
+-- Ajout à la publication Realtime, idempotent (ignore si déjà membre).
+do $$
+begin
+  alter publication supabase_realtime add table credits;
+exception
+  when duplicate_object then null;
+end $$;

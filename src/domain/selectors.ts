@@ -197,14 +197,41 @@ export function upcomingSubscriptions(
 
 // ---- Crédits ---------------------------------------------------------------
 
-/** Restant dû sur un crédit (jamais négatif). */
-export function creditRemaining(c: Credit): number {
-  return Math.max(0, c.totalAmountCents - c.paidAmountCents);
+/**
+ * Intérêts totaux estimés (« coût du crédit ») : ce que le taux fait payer en
+ * plus du capital emprunté. Calcul par amortissement à partir du capital, du
+ * taux annuel et de la mensualité. Retourne 0 si non calculable.
+ */
+export function creditInterestCents(c: Credit): number {
+  const P = c.totalAmountCents;
+  const M = c.monthlyPaymentCents;
+  const rate = c.interestRatePct ?? 0;
+  if (P <= 0 || M <= 0 || rate <= 0) return 0;
+  const i = rate / 100 / 12; // taux mensuel
+  if (M <= P * i) return 0; // mensualité insuffisante → non calculable
+  const n = Math.log(M / (M - P * i)) / Math.log(1 + i); // nombre de mensualités
+  return Math.max(0, Math.round(M * n - P));
 }
 
-/** Progression du remboursement (0 → 1). */
+/** Coût total à rembourser = capital + intérêts. */
+export function creditTotalCost(c: Credit): number {
+  return c.totalAmountCents + creditInterestCents(c);
+}
+
+/** Restant dû sur un crédit, intérêts inclus (jamais négatif). */
+export function creditRemaining(c: Credit): number {
+  return Math.max(0, creditTotalCost(c) - c.paidAmountCents);
+}
+
+/** Progression du remboursement (0 → 1), sur le coût total. */
 export function creditProgress(c: Credit): number {
-  return c.totalAmountCents > 0 ? Math.min(1, c.paidAmountCents / c.totalAmountCents) : 0;
+  const cost = creditTotalCost(c);
+  return cost > 0 ? Math.min(1, c.paidAmountCents / cost) : 0;
+}
+
+/** Pourcentage remboursé, entier 0–100. */
+export function creditRepaidPct(c: Credit): number {
+  return Math.round(creditProgress(c) * 100);
 }
 
 /** Un crédit est soldé si tout est payé ou l'échéance est passée. */

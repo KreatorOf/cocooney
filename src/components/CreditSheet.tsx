@@ -18,6 +18,7 @@ import { MoneyInput } from '@/components/MoneyInput';
 import { ThemedText } from '@/components/themed-text';
 import { noBounce } from '@/constants/scroll';
 import { Radius, Spacing } from '@/constants/theme';
+import { creditInterestCents } from '@/domain/selectors';
 import type { Credit } from '@/domain/types';
 import { useTheme } from '@/hooks/use-theme';
 import { useBudgetStore } from '@/store/useBudgetStore';
@@ -51,6 +52,7 @@ export function CreditSheet({ visible, editing, onClose, onSave, onDelete }: Pro
   const [paidCents, setPaidCents] = useState(0);
   const [monthlyCents, setMonthlyCents] = useState(0);
   const [day, setDay] = useState('1');
+  const [rate, setRate] = useState('');
   const [endMonth, setEndMonth] = useState(() => addMonths(currentMonth, 12));
   const [categoryId, setCategoryId] = useState<string | undefined>();
 
@@ -62,6 +64,7 @@ export function CreditSheet({ visible, editing, onClose, onSave, onDelete }: Pro
     setPaidCents(editing?.paidAmountCents ?? 0);
     setMonthlyCents(editing?.monthlyPaymentCents ?? 0);
     setDay(String(editing?.dayOfMonth ?? 1));
+    setRate(editing?.interestRatePct ? String(editing.interestRatePct) : '');
     setEndMonth(editing ? monthKey(editing.endDate) : addMonths(currentMonth, 12));
     setCategoryId(editing?.categoryId);
   }, [visible, editing, currentMonth]);
@@ -69,7 +72,13 @@ export function CreditSheet({ visible, editing, onClose, onSave, onDelete }: Pro
   const sharedCategories = categories.filter((c) => c.scope === 'shared');
   const category = sharedCategories.find((c) => c.id === categoryId);
   const dayNum = Math.min(31, Math.max(1, parseInt(day, 10) || 1));
-  const remaining = Math.max(0, totalCents - paidCents);
+  const rateNum = Math.max(0, parseFloat(rate.replace(',', '.')) || 0);
+  const interest = creditInterestCents({
+    totalAmountCents: totalCents,
+    monthlyPaymentCents: monthlyCents,
+    interestRatePct: rateNum,
+  } as Credit);
+  const remaining = Math.max(0, totalCents + interest - paidCents);
   const canSave = totalCents > 0 && monthlyCents > 0 && name.trim().length > 0;
   const atCurrent = endMonth <= currentMonth;
 
@@ -81,6 +90,7 @@ export function CreditSheet({ visible, editing, onClose, onSave, onDelete }: Pro
       paidAmountCents: paidCents,
       monthlyPaymentCents: monthlyCents,
       dayOfMonth: dayNum,
+      interestRatePct: rateNum,
       endDate: monthEndISO(endMonth),
       icon: category?.icon ?? 'card',
       color: category?.color ?? theme.accent,
@@ -136,19 +146,28 @@ export function CreditSheet({ visible, editing, onClose, onSave, onDelete }: Pro
                 </View>
               </View>
 
-              {/* Restant calculé */}
-              <View style={[styles.remaining, { backgroundColor: theme.accentSoft }]}>
-                <ThemedText type="small" themeColor="textSecondary">{t('credits.sheet.remaining')}</ThemedText>
-                <ThemedText type="smallBold" style={{ color: theme.accent, fontVariant: ['tabular-nums'] }}>
-                  {formatCents(remaining)}
-                </ThemedText>
-              </View>
-
               <View style={styles.line}>
                 <View style={{ flex: 1, gap: Spacing.sm }}>
                   <Label>{t('credits.sheet.monthly')}</Label>
                   <MoneyInput initialCents={monthlyCents} onChangeCents={setMonthlyCents} />
                 </View>
+                <View style={{ width: 110, gap: Spacing.sm }}>
+                  <Label>{t('credits.sheet.rate')}</Label>
+                  <View style={[styles.suffixInput, { backgroundColor: theme.card, borderColor: theme.border }]}>
+                    <TextInput
+                      value={rate}
+                      onChangeText={setRate}
+                      keyboardType="decimal-pad"
+                      placeholder="0"
+                      placeholderTextColor={theme.textSecondary}
+                      style={[styles.suffixField, { color: theme.text }]}
+                    />
+                    <ThemedText type="smallBold" style={{ color: theme.textSecondary }}>%</ThemedText>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.line}>
                 <View style={{ width: 90, gap: Spacing.sm }}>
                   <Label>{t('credits.sheet.day')}</Label>
                   <TextInput
@@ -159,23 +178,37 @@ export function CreditSheet({ visible, editing, onClose, onSave, onDelete }: Pro
                     style={[styles.input, styles.day, { color: theme.text, backgroundColor: theme.card, borderColor: theme.border }]}
                   />
                 </View>
+                <View style={{ flex: 1, gap: Spacing.sm }}>
+                  <Label>{t('credits.sheet.endDate')}</Label>
+                  <View style={[styles.stepper, { backgroundColor: theme.card, borderColor: theme.border }]}>
+                    <Pressable
+                      onPress={() => !atCurrent && setEndMonth(addMonths(endMonth, -1))}
+                      disabled={atCurrent}
+                      hitSlop={8}
+                      style={[styles.stepBtn, atCurrent && { opacity: 0.3 }]}>
+                      <Ionicons name="chevron-back" size={20} color={theme.text} />
+                    </Pressable>
+                    <ThemedText type="smallBold">{monthLabel(endMonth)}</ThemedText>
+                    <Pressable onPress={() => setEndMonth(addMonths(endMonth, 1))} hitSlop={8} style={styles.stepBtn}>
+                      <Ionicons name="chevron-forward" size={20} color={theme.text} />
+                    </Pressable>
+                  </View>
+                </View>
               </View>
 
-              {/* Échéance : sélecteur mois/année */}
-              <View style={{ gap: Spacing.sm }}>
-                <Label>{t('credits.sheet.endDate')}</Label>
-                <View style={[styles.stepper, { backgroundColor: theme.card, borderColor: theme.border }]}>
-                  <Pressable
-                    onPress={() => !atCurrent && setEndMonth(addMonths(endMonth, -1))}
-                    disabled={atCurrent}
-                    hitSlop={8}
-                    style={[styles.stepBtn, atCurrent && { opacity: 0.3 }]}>
-                    <Ionicons name="chevron-back" size={20} color={theme.text} />
-                  </Pressable>
-                  <ThemedText type="smallBold">{monthLabel(endMonth)}</ThemedText>
-                  <Pressable onPress={() => setEndMonth(addMonths(endMonth, 1))} hitSlop={8} style={styles.stepBtn}>
-                    <Ionicons name="chevron-forward" size={20} color={theme.text} />
-                  </Pressable>
+              {/* Synthèse : restant dû + coût des intérêts */}
+              <View style={[styles.summary, { backgroundColor: theme.accentSoft }]}>
+                <View style={{ gap: 2 }}>
+                  <ThemedText type="small" themeColor="textSecondary">{t('credits.sheet.remaining')}</ThemedText>
+                  <ThemedText type="smallBold" style={{ color: theme.text, fontVariant: ['tabular-nums'] }}>
+                    {formatCents(remaining)}
+                  </ThemedText>
+                </View>
+                <View style={{ gap: 2, alignItems: 'flex-end' }}>
+                  <ThemedText type="small" themeColor="textSecondary">{t('credits.sheet.interest')}</ThemedText>
+                  <ThemedText type="smallBold" style={{ color: theme.accent, fontVariant: ['tabular-nums'] }}>
+                    +{formatCents(interest)}
+                  </ThemedText>
                 </View>
               </View>
 
@@ -234,12 +267,22 @@ const styles = StyleSheet.create({
   input: { height: 52, borderWidth: 1, borderRadius: Radius.md, paddingHorizontal: Spacing.md, fontSize: 16 },
   day: { textAlign: 'center', fontWeight: '700', fontSize: 18 },
   line: { flexDirection: 'row', gap: Spacing.md },
-  remaining: {
+  suffixInput: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 52,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    gap: 4,
+  },
+  suffixField: { flex: 1, fontSize: 17, fontWeight: '600', fontVariant: ['tabular-nums'] },
+  summary: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
     borderRadius: Radius.md,
   },
   stepper: {

@@ -104,6 +104,7 @@ create table if not exists credits (
   paid_amount_cents     bigint not null default 0,
   monthly_payment_cents bigint not null,
   day_of_month          int not null check (day_of_month between 1 and 31),
+  interest_rate_pct     numeric not null default 0,
   end_date              date not null,
   icon                  text not null default 'card',
   color                 text not null default '#6457F9',

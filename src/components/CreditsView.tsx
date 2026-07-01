@@ -12,8 +12,10 @@ import { SectionTitle } from '@/components/SectionTitle';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import {
+  creditInterestCents,
   creditProgress,
   creditRemaining,
+  creditRepaidPct,
   creditsMonthlyTotal,
   creditsRemainingTotal,
   isCreditDone,
@@ -92,23 +94,46 @@ function CreditRow({ credit, onEdit, onPay }: { credit: Credit; onEdit: () => vo
   const { t } = useTranslation();
   const theme = useTheme();
   const remaining = creditRemaining(credit);
+  const interest = creditInterestCents(credit);
+  const repaid = creditRepaidPct(credit);
   const done = isCreditDone(credit);
   const nextDate = nextOccurrence(credit.dayOfMonth);
+
+  // Le badge bascule entre % remboursé et % restant au tap.
+  const [showRemaining, setShowRemaining] = useState(false);
+  const togglePct = () => {
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    setShowRemaining((v) => !v);
+  };
 
   return (
     <View style={{ gap: Spacing.sm }}>
       <Pressable onPress={onEdit} style={({ pressed }) => [styles.row, pressed && { opacity: 0.6 }]}>
         <CategoryIcon icon={credit.icon} color={credit.color} size={42} />
-        <View style={{ flex: 1, gap: 6 }}>
+        <View style={{ flex: 1, gap: 8 }}>
           <View style={styles.line}>
             <ThemedText type="small" style={{ fontWeight: '600' }} numberOfLines={1}>{credit.name}</ThemedText>
             <ThemedText type="smallBold" style={styles.tnum}>{formatCents(remaining)}</ThemedText>
           </View>
           <ProgressBar progress={creditProgress(credit)} color={credit.color} height={6} />
           <View style={styles.line}>
-            <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 12 }}>
-              {t('credits.paidOfTotal', { paid: formatCents(credit.paidAmountCents), total: formatCents(credit.totalAmountCents) })}
-            </ThemedText>
+            <View style={styles.footerLeft}>
+              <Pressable
+                onPress={togglePct}
+                hitSlop={6}
+                style={[styles.pctPill, { backgroundColor: credit.color + '22' }]}>
+                <ThemedText type="small" style={{ color: credit.color, fontWeight: '700', fontSize: 12 }}>
+                  {showRemaining
+                    ? t('credits.remainingPct', { pct: 100 - repaid })
+                    : t('credits.repaid', { pct: repaid })}
+                </ThemedText>
+              </Pressable>
+              {interest > 0 && (
+                <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 12 }}>
+                  {t('credits.interestExtra', { amount: formatCents(interest) })}
+                </ThemedText>
+              )}
+            </View>
             <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 12 }}>
               {done ? t('credits.done') : t('credits.nextDue', { when: relativeDay(nextDate) })}
             </ThemedText>
@@ -142,6 +167,8 @@ const styles = StyleSheet.create({
   tnum: { fontVariant: ['tabular-nums'] },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
   line: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  footerLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexShrink: 1 },
+  pctPill: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: Radius.pill },
   add: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.md, paddingTop: Spacing.lg },
   payBtn: {
     flexDirection: 'row',

@@ -83,6 +83,8 @@ export interface Credit {
   monthlyPaymentCents: number;
   /** Jour du mois de prélèvement (1–31, écrêté pour les mois courts). */
   dayOfMonth: number;
+  /** Taux d'emprunt annuel (%, ex. 3.5). 0 = sans intérêts. */
+  interestRatePct: number;
   /** Échéance (dernier prélèvement), date ISO 'YYYY-MM-DD'. */
   endDate: string;
   icon: string;
