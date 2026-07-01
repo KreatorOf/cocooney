@@ -4,7 +4,7 @@
  * Quand on est connecté, `SyncProvider` les remplace par des écritures Supabase.
  */
 
-import type { Budget, Category, Subscription, Transaction } from '@/domain/types';
+import type { Budget, Category, Credit, Subscription, Transaction } from '@/domain/types';
 
 interface SyncHandlers {
   onAddTransaction: (tx: Transaction) => void;
@@ -18,6 +18,9 @@ interface SyncHandlers {
   onAddSubscription: (subscription: Subscription) => void;
   onUpdateSubscription: (subscription: Subscription) => void;
   onDeleteSubscription: (id: string) => void;
+  onAddCredit: (credit: Credit) => void;
+  onUpdateCredit: (credit: Credit) => void;
+  onDeleteCredit: (id: string) => void;
 }
 
 const noop = () => {};
@@ -34,6 +37,9 @@ export const syncBridge: SyncHandlers = {
   onAddSubscription: noop,
   onUpdateSubscription: noop,
   onDeleteSubscription: noop,
+  onAddCredit: noop,
+  onUpdateCredit: noop,
+  onDeleteCredit: noop,
 };
 
 export function setSyncHandlers(handlers: Partial<SyncHandlers>) {
@@ -52,4 +58,7 @@ export function resetSyncHandlers() {
   syncBridge.onAddSubscription = noop;
   syncBridge.onUpdateSubscription = noop;
   syncBridge.onDeleteSubscription = noop;
+  syncBridge.onAddCredit = noop;
+  syncBridge.onUpdateCredit = noop;
+  syncBridge.onDeleteCredit = noop;
 }

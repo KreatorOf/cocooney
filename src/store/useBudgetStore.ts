@@ -14,6 +14,7 @@ import type {
   Account,
   Budget,
   Category,
+  Credit,
   Member,
   Scope,
   SplitRule,
@@ -53,6 +54,19 @@ export interface NewSubscriptionInput {
   dayOfMonth: number;
 }
 
+export interface NewCreditInput {
+  name: string;
+  totalAmountCents: number;
+  paidAmountCents: number;
+  monthlyPaymentCents: number;
+  dayOfMonth: number;
+  endDate: string;
+  icon: string;
+  color: string;
+  categoryId?: string;
+  scope: Scope;
+}
+
 /** Données complètes provenant du serveur, pour remplacer le cache local. */
 export interface RemoteSnapshot {
   members: Member[];
@@ -61,6 +75,7 @@ export interface RemoteSnapshot {
   budgets: Budget[];
   transactions: Transaction[];
   subscriptions: Subscription[];
+  credits: Credit[];
   currentUserId: string;
 }
 
@@ -71,6 +86,7 @@ interface BudgetState {
   budgets: Budget[];
   transactions: Transaction[];
   subscriptions: Subscription[];
+  credits: Credit[];
   /** Membre représentant l'utilisateur de cet appareil. */
   currentUserId: string;
   /** Mois réel (aujourd'hui). */
@@ -91,6 +107,11 @@ interface BudgetState {
   addSubscription: (input: NewSubscriptionInput) => Subscription;
   updateSubscription: (subscription: Subscription) => void;
   deleteSubscription: (id: string) => void;
+  addCredit: (input: NewCreditInput) => Credit;
+  updateCredit: (credit: Credit) => void;
+  deleteCredit: (id: string) => void;
+  /** Paie une mensualité : incrémente le payé + crée une dépense foyer. */
+  payCreditInstallment: (id: string) => void;
   /** Remplace le cache local avec un instantané serveur (sync). */
   hydrateFromRemote: (snapshot: RemoteSnapshot) => void;
 }
@@ -113,6 +134,7 @@ export const useBudgetStore = create<BudgetState>()(
       budgets: [],
       transactions: [],
       subscriptions: [],
+      credits: [],
       currentUserId: '',
       currentMonth: monthKey(),
       selectedMonth: monthKey(),
@@ -264,6 +286,60 @@ export const useBudgetStore = create<BudgetState>()(
         syncBridge.onDeleteSubscription(id);
       },
 
+      addCredit: (input) => {
+        const credit: Credit = {
+          id: uid(),
+          name: input.name.trim() || 'Crédit',
+          totalAmountCents: Math.abs(input.totalAmountCents),
+          paidAmountCents: Math.max(0, Math.abs(input.paidAmountCents)),
+          monthlyPaymentCents: Math.abs(input.monthlyPaymentCents),
+          dayOfMonth: Math.min(31, Math.max(1, input.dayOfMonth)),
+          endDate: input.endDate,
+          icon: input.icon,
+          color: input.color,
+          categoryId: input.categoryId,
+          scope: input.scope,
+          active: true,
+        };
+        set((state) => ({ credits: [...state.credits, credit] }));
+        syncBridge.onAddCredit(credit);
+        return credit;
+      },
+
+      updateCredit: (credit) => {
+        set((state) => ({
+          credits: state.credits.map((c) => (c.id === credit.id ? credit : c)),
+        }));
+        syncBridge.onUpdateCredit(credit);
+      },
+
+      deleteCredit: (id) => {
+        set((state) => ({ credits: state.credits.filter((c) => c.id !== id) }));
+        syncBridge.onDeleteCredit(id);
+      },
+
+      payCreditInstallment: (id) => {
+        const credit = useBudgetStore.getState().credits.find((c) => c.id === id);
+        if (!credit) return;
+        const updated: Credit = {
+          ...credit,
+          paidAmountCents: Math.min(
+            credit.totalAmountCents,
+            credit.paidAmountCents + credit.monthlyPaymentCents,
+          ),
+        };
+        useBudgetStore.getState().updateCredit(updated);
+        // Trace la mensualité comme une dépense foyer.
+        useBudgetStore.getState().addTransaction({
+          amountCents: -credit.monthlyPaymentCents,
+          label: credit.name,
+          scope: 'shared',
+          ownerId: useBudgetStore.getState().currentUserId,
+          categoryId: credit.categoryId ?? '',
+          splitRule: { kind: 'fiftyFifty' },
+        });
+      },
+
       hydrateFromRemote: (snapshot) =>
         set({
           members: snapshot.members,
@@ -272,12 +348,13 @@ export const useBudgetStore = create<BudgetState>()(
           budgets: snapshot.budgets,
           transactions: snapshot.transactions,
           subscriptions: snapshot.subscriptions,
+          credits: snapshot.credits,
           currentUserId: snapshot.currentUserId,
           currentMonth: monthKey(),
         }),
     }),
     {
-      name: 'budget-store-v2',
+      name: 'budget-store-v3',
       storage: createJSONStorage(() => AsyncStorage),
     },
   ),

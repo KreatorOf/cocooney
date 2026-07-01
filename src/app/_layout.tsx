@@ -9,6 +9,7 @@ import '@/lib/i18n';
 import { Colors } from '@/constants/theme';
 import { AuthGate } from '@/providers/AuthGate';
 import { AuthProvider } from '@/providers/AuthProvider';
+import { NotificationsProvider } from '@/providers/NotificationsProvider';
 import { PremiumProvider } from '@/providers/PremiumProvider';
 import { SyncProvider } from '@/providers/SyncProvider';
 
@@ -37,6 +38,7 @@ export default function RootLayout() {
           <AuthProvider>
             <PremiumProvider>
               <SyncProvider>
+                <NotificationsProvider>
                 <AuthGate>
                 <Stack>
                   <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -64,6 +66,7 @@ export default function RootLayout() {
                   />
                 </Stack>
                 </AuthGate>
+                </NotificationsProvider>
               </SyncProvider>
             </PremiumProvider>
           </AuthProvider>

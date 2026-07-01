@@ -71,6 +71,28 @@ export interface Subscription {
   active: boolean;
 }
 
+/** Crédit / prêt du foyer, remboursé par mensualités. */
+export interface Credit {
+  id: string;
+  name: string;
+  /** Montant total emprunté (positif, centimes). */
+  totalAmountCents: number;
+  /** Somme déjà remboursée (positif, centimes). Le restant est calculé. */
+  paidAmountCents: number;
+  /** Mensualité (positif, centimes). */
+  monthlyPaymentCents: number;
+  /** Jour du mois de prélèvement (1–31, écrêté pour les mois courts). */
+  dayOfMonth: number;
+  /** Échéance (dernier prélèvement), date ISO 'YYYY-MM-DD'. */
+  endDate: string;
+  icon: string;
+  color: string;
+  /** Catégorie rattachée (pour la dépense créée au « Payer »). */
+  categoryId?: string;
+  scope: Scope;
+  active: boolean;
+}
+
 export interface Transaction {
   id: string;
   /** Négatif = dépense, positif = revenu. En centimes. */

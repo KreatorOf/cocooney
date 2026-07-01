@@ -96,6 +96,26 @@ create table if not exists subscriptions (
 );
 create index if not exists idx_sub_household on subscriptions(household_id);
 
+create table if not exists credits (
+  id                    uuid primary key default gen_random_uuid(),
+  household_id          uuid not null references households on delete cascade,
+  name                  text not null,
+  total_amount_cents    bigint not null,
+  paid_amount_cents     bigint not null default 0,
+  monthly_payment_cents bigint not null,
+  day_of_month          int not null check (day_of_month between 1 and 31),
+  end_date              date not null,
+  icon                  text not null default 'card',
+  color                 text not null default '#6457F9',
+  category_id           uuid references categories on delete set null,
+  scope                 text not null default 'shared' check (scope in ('shared','personal')),
+  owner_id              uuid references profiles,
+  active                boolean not null default true,
+  created_at            timestamptz not null default now(),
+  updated_at            timestamptz not null default now()
+);
+create index if not exists idx_credit_household on credits(household_id);
+
 -- ----------------------------------------------------------------------------
 -- Helper : household du user courant (security definer pour contourner la RLS
 -- de profiles lors de l'évaluation des policies des autres tables).
@@ -205,6 +225,7 @@ alter table categories   enable row level security;
 alter table budgets      enable row level security;
 alter table transactions enable row level security;
 alter table subscriptions enable row level security;
+alter table credits enable row level security;
 
 -- profiles : je vois mon profil + ceux de mon foyer ; je modifie le mien.
 create policy "profiles_select" on profiles for select
@@ -281,6 +302,16 @@ create policy "subscriptions_insert" on subscriptions for insert
   with check (household_id = auth_household_id() and (scope = 'shared' or owner_id = auth.uid()));
 create policy "subscriptions_update" on subscriptions for update
   using (household_id = auth_household_id() and (scope = 'shared' or owner_id = auth.uid()));
+create policy "credits_select" on credits for select
+  using (household_id = auth_household_id()
+         and (scope = 'shared' or owner_id = auth.uid() or owner_shares_personal(owner_id)));
+create policy "credits_insert" on credits for insert
+  with check (household_id = auth_household_id() and (scope = 'shared' or owner_id = auth.uid()));
+create policy "credits_update" on credits for update
+  using (household_id = auth_household_id() and (scope = 'shared' or owner_id = auth.uid()));
+create policy "credits_delete" on credits for delete
+  using (household_id = auth_household_id() and (scope = 'shared' or owner_id = auth.uid()));
+
 create policy "subscriptions_delete" on subscriptions for delete
   using (household_id = auth_household_id() and (scope = 'shared' or owner_id = auth.uid()));
 
@@ -293,3 +324,4 @@ alter publication supabase_realtime add table accounts;
 alter publication supabase_realtime add table categories;
 alter publication supabase_realtime add table profiles;
 alter publication supabase_realtime add table subscriptions;
+alter publication supabase_realtime add table credits;

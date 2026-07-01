@@ -30,7 +30,40 @@
   },
   "filters": {
     "all": "All",
+    "credits": "Loans",
+    "charges": "Charges",
     "subscriptions": "Subscriptions"
+  },
+  "credits": {
+    "title": "Loans",
+    "remainingTotal": "Remaining",
+    "monthlyTotal": "Monthly",
+    "empty": "No loans yet. Add the household's loans to track repayments.",
+    "add": "Add a loan",
+    "payInstallment": "Pay this month",
+    "remaining": "Remaining",
+    "monthly": "Monthly",
+    "paidOfTotal": "{{paid}} / {{total}}",
+    "nextDue": "Debit {{when}}",
+    "done": "Paid off",
+    "chargesSoon": "Coming soon: your charges grouped by category.",
+    "sheet": {
+      "new": "New loan",
+      "edit": "Edit loan",
+      "namePlaceholder": "Name (e.g. Car loan)",
+      "total": "TOTAL AMOUNT",
+      "paid": "ALREADY PAID",
+      "monthly": "MONTHLY PAYMENT",
+      "day": "DAY",
+      "endDate": "END DATE",
+      "category": "CATEGORY",
+      "remaining": "Remaining",
+      "delete": "Delete loan"
+    }
+  },
+  "notifications": {
+    "creditReminderTitle": "Upcoming debit",
+    "creditReminderBody": "{{name}} · {{amount}} due soon"
   },
   "household": {
     "title": "Household",

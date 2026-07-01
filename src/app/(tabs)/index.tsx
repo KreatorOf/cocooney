@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AddFab } from '@/components/AddFab';
 import { BOTTOM_BAR_SPACE } from '@/components/BottomBar';
 import { Card } from '@/components/Card';
+import { CreditsView } from '@/components/CreditsView';
 import { EnvelopeRow } from '@/components/EnvelopeRow';
 import { FilterChips, type FilterChip } from '@/components/FilterChips';
 import { ProgressBar } from '@/components/ProgressBar';
@@ -22,18 +23,14 @@ import {
   projectedSpend,
   spentForScope,
   spentInCategory,
-  subscriptionsTotal,
   totalBudget,
-  upcomingSubscriptions,
 } from '@/domain/selectors';
-import type { Category, Transaction } from '@/domain/types';
 import { noBounce } from '@/constants/scroll';
 import { useTheme } from '@/hooks/use-theme';
 import { useBudgetStore } from '@/store/useBudgetStore';
-import { daysLeftInMonth, monthKey, relativeDay } from '@/utils/date';
+import { daysLeftInMonth, monthKey } from '@/utils/date';
 import { formatCents } from '@/utils/money';
 import { MonthSwitcher } from '@/components/MonthSwitcher';
-import { CategoryIcon } from '@/components/CategoryIcon';
 
 /** Petit wrapper d'animation d'entrée (fondu net), décalé selon l'ordre d'apparition. */
 function Reveal({ delay, children }: { delay: number; children: React.ReactNode }) {
@@ -49,10 +46,9 @@ export default function HouseholdScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
-  const { members, categories, budgets, transactions, subscriptions, currentMonth, selectedMonth, currentUserId } =
+  const { members, categories, budgets, transactions, currentMonth, selectedMonth, currentUserId } =
     useBudgetStore();
   const isCurrentMonth = selectedMonth === currentMonth;
-  const subTotal = subscriptionsTotal(subscriptions);
 
   const sharedCategories = categories.filter((c) => c.scope === 'shared');
   const totalLimit = totalBudget(budgets, categories, 'shared', selectedMonth);
@@ -76,21 +72,13 @@ export default function HouseholdScreen() {
     (c) => c.scope === 'personal' && c.ownerId && c.ownerId !== currentUserId,
   );
 
-  // --- Filtres « pills » -----------------------------------------------------
-  const [filter, setFilter] = useState('all');
-  const chips = useMemo<FilterChip[]>(() => {
-    const list: FilterChip[] = [{ id: 'all', label: t('filters.all') }];
-    for (const c of sharedCategories) list.push({ id: c.id, label: c.name });
-    if (subscriptions.length > 0) list.push({ id: 'subscriptions', label: t('filters.subscriptions') });
-    return list;
-  }, [sharedCategories, subscriptions.length, t]);
-
-  // Garde-fou : si la catégorie filtrée disparaît, on revient à « Tout ».
-  const activeFilter = chips.some((c) => c.id === filter) ? filter : 'all';
-  const focusCategory =
-    activeFilter !== 'all' && activeFilter !== 'subscriptions'
-      ? sharedCategories.find((c) => c.id === activeFilter)
-      : undefined;
+  // --- Pills fixes : Tout / Crédits / Charges --------------------------------
+  const [activeFilter, setActiveFilter] = useState<'all' | 'credits' | 'charges'>('all');
+  const chips: FilterChip[] = [
+    { id: 'all', label: t('filters.all') },
+    { id: 'credits', label: t('filters.credits') },
+    { id: 'charges', label: t('filters.charges') },
+  ];
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
@@ -116,7 +104,11 @@ export default function HouseholdScreen() {
 
         {/* Filtres */}
         <Reveal delay={20}>
-          <FilterChips items={chips} selectedId={activeFilter} onSelect={setFilter} />
+          <FilterChips
+            items={chips}
+            selectedId={activeFilter}
+            onSelect={(id) => setActiveFilter(id as 'all' | 'credits' | 'charges')}
+          />
         </Reveal>
 
         {activeFilter === 'all' && (
@@ -264,132 +256,27 @@ export default function HouseholdScreen() {
           </>
         )}
 
-        {/* Filtre : abonnements */}
-        {activeFilter === 'subscriptions' && (
+        {/* Pill : Crédits */}
+        {activeFilter === 'credits' && (
           <Reveal delay={70}>
-            <View style={{ gap: Spacing.md }}>
-              <MonthSwitcher />
-              <Pressable onPress={() => router.push('/subscriptions')}>
-                <Card style={{ gap: Spacing.xs }}>
-                  <ThemedText type="small" themeColor="textSecondary">{t('subscriptions.monthlyTotal')}</ThemedText>
-                  <ThemedText style={styles.hero}>{formatCents(subTotal)}</ThemedText>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    {t('subscriptions.activeCount', { count: subscriptions.filter((s) => s.active).length })}
-                  </ThemedText>
-                </Card>
-              </Pressable>
-
-              <View style={styles.sectionRow}>
-                <SectionTitle>{t('subscriptions.upcoming')}</SectionTitle>
-                <Pressable onPress={() => router.push('/subscriptions')} hitSlop={8}>
-                  <ThemedText type="smallBold" style={{ color: theme.accent }}>
-                    {t('common.seeAll')}
-                  </ThemedText>
-                </Pressable>
-              </View>
-              <Card style={{ gap: Spacing.md }}>
-                {upcomingSubscriptions(subscriptions).slice(0, 8).map(({ sub, nextDate }) => (
-                  <View key={sub.id} style={styles.topRow}>
-                    <CategoryIcon icon={sub.icon} color={sub.color} size={40} />
-                    <View style={{ flex: 1 }}>
-                      <ThemedText type="small" style={{ fontWeight: '600' }} numberOfLines={1}>{sub.name}</ThemedText>
-                      <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 12 }}>
-                        {relativeDay(nextDate)} · {formatCents(sub.amountCents)}
-                      </ThemedText>
-                    </View>
-                  </View>
-                ))}
-              </Card>
-            </View>
+            <CreditsView />
           </Reveal>
         )}
 
-        {/* Filtre : enveloppe ciblée */}
-        {focusCategory && (
-          <FocusCategory
-            category={focusCategory}
-            limitCents={
-              budgets.find((b) => b.categoryId === focusCategory.id && b.month === selectedMonth)
-                ?.limitCents ?? 0
-            }
-            spentCents={spentInCategory(transactions, focusCategory.id, selectedMonth)}
-            transactions={transactions
-              .filter((tx) => tx.categoryId === focusCategory.id && monthKey(tx.date) === selectedMonth)
-              .sort((a, b) => +new Date(b.date) - +new Date(a.date))}
-            memberName={memberName}
-          />
+        {/* Pill : Charges (à venir) */}
+        {activeFilter === 'charges' && (
+          <Reveal delay={70}>
+            <Card>
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('credits.chargesSoon')}
+              </ThemedText>
+            </Card>
+          </Reveal>
         )}
       </ScrollView>
 
       <AddFab expenseScope="shared" />
     </View>
-  );
-}
-
-/** Vue focus d'une enveloppe : jauge + transactions du mois. */
-function FocusCategory({
-  category,
-  limitCents,
-  spentCents,
-  transactions,
-  memberName,
-}: {
-  category: Category;
-  limitCents: number;
-  spentCents: number;
-  transactions: Transaction[];
-  memberName: (id: string) => string;
-}) {
-  const { t } = useTranslation();
-  const theme = useTheme();
-
-  return (
-    <>
-      <Reveal delay={70}>
-        <MonthSwitcher />
-      </Reveal>
-      <Reveal delay={90}>
-        <Card>
-          <Pressable
-            onPress={() => router.push(`/category/${category.id}`)}
-            style={({ pressed }) => pressed && { opacity: 0.6 }}>
-            <EnvelopeRow category={category} spentCents={spentCents} limitCents={limitCents} />
-          </Pressable>
-        </Card>
-      </Reveal>
-
-      <Reveal delay={120}>
-        <View style={{ gap: Spacing.md }}>
-          <View style={styles.sectionRow}>
-            <SectionTitle>{t('household.focusTransactions')}</SectionTitle>
-            <Pressable onPress={() => router.push(`/category/${category.id}`)} hitSlop={8}>
-              <ThemedText type="smallBold" style={{ color: theme.accent }}>
-                {t('common.seeAll')}
-              </ThemedText>
-            </Pressable>
-          </View>
-          <Card>
-            {transactions.length === 0 ? (
-              <ThemedText type="small" themeColor="textSecondary">
-                {t('category.noExpenseThisMonth')}
-              </ThemedText>
-            ) : (
-              transactions.slice(0, 8).map((tx, i) => (
-                <View key={tx.id}>
-                  {i > 0 && <Divider />}
-                  <TransactionRow
-                    tx={tx}
-                    category={category}
-                    payerName={tx.scope === 'shared' ? memberName(tx.ownerId) : undefined}
-                    onLongPress={() => useBudgetStore.getState().deleteTransaction(tx.id)}
-                  />
-                </View>
-              ))
-            )}
-          </Card>
-        </View>
-      </Reveal>
-    </>
   );
 }
 
@@ -492,7 +379,6 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     paddingTop: Spacing.md,
   },
-  topRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
   sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   balance: {
     flexDirection: 'row',

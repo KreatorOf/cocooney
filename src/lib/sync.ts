@@ -14,6 +14,7 @@ import type {
   Account,
   Budget,
   Category,
+  Credit,
   Member,
   Scope,
   SplitRule,
@@ -72,6 +73,21 @@ const toSubscription = (r: any): Subscription => ({
   active: r.active,
 });
 
+const toCredit = (r: any): Credit => ({
+  id: r.id,
+  name: r.name,
+  totalAmountCents: r.total_amount_cents,
+  paidAmountCents: r.paid_amount_cents,
+  monthlyPaymentCents: r.monthly_payment_cents,
+  dayOfMonth: r.day_of_month,
+  endDate: r.end_date,
+  icon: r.icon,
+  color: r.color,
+  categoryId: r.category_id ?? undefined,
+  scope: r.scope as Scope,
+  active: r.active,
+});
+
 const toTransaction = (r: any): Transaction => ({
   id: r.id,
   amountCents: r.amount_cents,
@@ -90,14 +106,16 @@ const toTransaction = (r: any): Transaction => ({
 
 export async function pullAll(householdId: string, currentUserId: string) {
   if (!supabase) return;
-  const [profiles, accounts, categories, budgets, transactions, subscriptions] = await Promise.all([
-    supabase.from('profiles').select('*').eq('household_id', householdId),
-    supabase.from('accounts').select('*').eq('household_id', householdId),
-    supabase.from('categories').select('*').eq('household_id', householdId),
-    supabase.from('budgets').select('*').eq('household_id', householdId),
-    supabase.from('transactions').select('*').eq('household_id', householdId),
-    supabase.from('subscriptions').select('*').eq('household_id', householdId),
-  ]);
+  const [profiles, accounts, categories, budgets, transactions, subscriptions, credits] =
+    await Promise.all([
+      supabase.from('profiles').select('*').eq('household_id', householdId),
+      supabase.from('accounts').select('*').eq('household_id', householdId),
+      supabase.from('categories').select('*').eq('household_id', householdId),
+      supabase.from('budgets').select('*').eq('household_id', householdId),
+      supabase.from('transactions').select('*').eq('household_id', householdId),
+      supabase.from('subscriptions').select('*').eq('household_id', householdId),
+      supabase.from('credits').select('*').eq('household_id', householdId),
+    ]);
 
   useBudgetStore.getState().hydrateFromRemote({
     members: (profiles.data ?? []).map(toMember),
@@ -106,6 +124,7 @@ export async function pullAll(householdId: string, currentUserId: string) {
     budgets: (budgets.data ?? []).map(toBudget),
     transactions: (transactions.data ?? []).map(toTransaction),
     subscriptions: (subscriptions.data ?? []).map(toSubscription),
+    credits: (credits.data ?? []).map(toCredit),
     currentUserId,
   });
 }
@@ -173,7 +192,35 @@ export function registerWriters(householdId: string) {
     onDeleteSubscription: (id) => {
       void supabase?.from('subscriptions').delete().eq('id', id);
     },
+    onAddCredit: (c) => {
+      void supabase?.from('credits').upsert(creditRow(c, householdId));
+    },
+    onUpdateCredit: (c) => {
+      void supabase?.from('credits').upsert(creditRow(c, householdId));
+    },
+    onDeleteCredit: (id) => {
+      void supabase?.from('credits').delete().eq('id', id);
+    },
   });
+}
+
+function creditRow(c: Credit, householdId: string) {
+  return {
+    id: c.id,
+    household_id: householdId,
+    name: c.name,
+    total_amount_cents: c.totalAmountCents,
+    paid_amount_cents: c.paidAmountCents,
+    monthly_payment_cents: c.monthlyPaymentCents,
+    day_of_month: c.dayOfMonth,
+    end_date: c.endDate,
+    icon: c.icon,
+    color: c.color,
+    category_id: c.categoryId ?? null,
+    scope: c.scope,
+    active: c.active,
+    updated_at: new Date().toISOString(),
+  };
 }
 
 function categoryRow(c: Category, householdId: string) {
@@ -216,7 +263,7 @@ export function startRealtime(
   const filter = `household_id=eq.${householdId}`;
   const channel = supabase.channel(`household:${householdId}`);
 
-  for (const table of ['transactions', 'budgets', 'accounts', 'categories', 'profiles', 'subscriptions'] as const) {
+  for (const table of ['transactions', 'budgets', 'accounts', 'categories', 'profiles', 'subscriptions', 'credits'] as const) {
     channel.on('postgres_changes', { event: '*', schema: 'public', table, filter }, onRemoteChange);
   }
   channel.subscribe();

@@ -74,7 +74,16 @@ Chaque transaction porte `scope` (`shared`/`personal`) + `ownerId` : c'est ce qu
 ## Migrations SQL (ordre)
 
 `schema.sql` est le miroir complet. Migrations incrémentales à exécuter :
-`update_blank_onboarding.sql` → `update_privacy_sharing.sql` → `update_subscriptions.sql` → `update_premium.sql`.
+`update_blank_onboarding.sql` → `update_privacy_sharing.sql` → `update_subscriptions.sql` → `update_premium.sql` → `update_credits.sql`.
+
+## Crédits du foyer (pill « Crédits »)
+
+- Table `credits` (migration `update_credits.sql`, RLS scope-aware + Realtime), type `Credit`, store
+  (`addCredit`/`updateCredit`/`deleteCredit`/`payCreditInstallment`) + sync (`toCredit`/`creditRow`).
+- `selectors`: `creditRemaining`, `creditProgress`, `isCreditDone`, `creditsMonthlyTotal`,
+  `creditsRemainingTotal`, `upcomingCredits`. UI : `CreditsView` + `CreditSheet`.
+- **Notifications locales** (`expo-notifications`, `src/lib/notifications.ts` + `NotificationsProvider`) :
+  rappel mensuel 2 j avant le prélèvement, planifié sur chaque appareil.
 
 ## Prochaines étapes prévues
 

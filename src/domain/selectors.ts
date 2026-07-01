@@ -1,7 +1,7 @@
 /** Calculs dérivés du modèle : dépenses, enveloppes et solde du couple. */
 
 import { monthKey, nextOccurrence } from '@/utils/date';
-import type { Budget, Category, Member, Subscription, Transaction } from './types';
+import type { Budget, Category, Credit, Member, Subscription, Transaction } from './types';
 
 /** Total dépensé (valeur absolue) dans une catégorie sur un mois donné. */
 export function spentInCategory(
@@ -192,5 +192,46 @@ export function upcomingSubscriptions(
   return subs
     .filter((s) => s.active)
     .map((s) => ({ sub: s, nextDate: nextOccurrence(s.dayOfMonth, now) }))
+    .sort((a, b) => +a.nextDate - +b.nextDate);
+}
+
+// ---- Crédits ---------------------------------------------------------------
+
+/** Restant dû sur un crédit (jamais négatif). */
+export function creditRemaining(c: Credit): number {
+  return Math.max(0, c.totalAmountCents - c.paidAmountCents);
+}
+
+/** Progression du remboursement (0 → 1). */
+export function creditProgress(c: Credit): number {
+  return c.totalAmountCents > 0 ? Math.min(1, c.paidAmountCents / c.totalAmountCents) : 0;
+}
+
+/** Un crédit est soldé si tout est payé ou l'échéance est passée. */
+export function isCreditDone(c: Credit, now: Date = new Date()): boolean {
+  const today = now.toISOString().slice(0, 10);
+  return creditRemaining(c) <= 0 || (!!c.endDate && c.endDate < today);
+}
+
+/** Total des mensualités des crédits actifs non soldés. */
+export function creditsMonthlyTotal(credits: Credit[]): number {
+  return credits
+    .filter((c) => c.active && !isCreditDone(c))
+    .reduce((sum, c) => sum + c.monthlyPaymentCents, 0);
+}
+
+/** Total restant dû sur l'ensemble des crédits actifs. */
+export function creditsRemainingTotal(credits: Credit[]): number {
+  return credits.filter((c) => c.active).reduce((sum, c) => sum + creditRemaining(c), 0);
+}
+
+/** Crédits actifs non soldés triés par prochaine échéance de prélèvement. */
+export function upcomingCredits(
+  credits: Credit[],
+  now: Date = new Date(),
+): { credit: Credit; nextDate: Date }[] {
+  return credits
+    .filter((c) => c.active && !isCreditDone(c, now))
+    .map((c) => ({ credit: c, nextDate: nextOccurrence(c.dayOfMonth, now) }))
     .sort((a, b) => +a.nextDate - +b.nextDate);
 }

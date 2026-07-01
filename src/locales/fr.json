@@ -30,7 +30,40 @@
   },
   "filters": {
     "all": "Tout",
+    "credits": "Crédits",
+    "charges": "Charges",
     "subscriptions": "Abonnements"
+  },
+  "credits": {
+    "title": "Crédits",
+    "remainingTotal": "Restant dû",
+    "monthlyTotal": "Mensualités",
+    "empty": "Aucun crédit. Ajoute les prêts du foyer pour suivre les remboursements.",
+    "add": "Ajouter un crédit",
+    "payInstallment": "Payer la mensualité",
+    "remaining": "Restant",
+    "monthly": "Mensualité",
+    "paidOfTotal": "{{paid}} / {{total}}",
+    "nextDue": "Prélèvement {{when}}",
+    "done": "Soldé",
+    "chargesSoon": "Bientôt : vos charges regroupées par catégorie.",
+    "sheet": {
+      "new": "Nouveau crédit",
+      "edit": "Modifier le crédit",
+      "namePlaceholder": "Nom (ex. Prêt auto)",
+      "total": "MONTANT TOTAL",
+      "paid": "DÉJÀ PAYÉ",
+      "monthly": "MENSUALITÉ",
+      "day": "JOUR",
+      "endDate": "ÉCHÉANCE",
+      "category": "CATÉGORIE",
+      "remaining": "Restant",
+      "delete": "Supprimer le crédit"
+    }
+  },
+  "notifications": {
+    "creditReminderTitle": "Prélèvement à venir",
+    "creditReminderBody": "{{name}} · {{amount}} bientôt prélevé"
   },
   "household": {
     "title": "Foyer",
