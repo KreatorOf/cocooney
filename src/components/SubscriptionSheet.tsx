@@ -17,6 +17,7 @@ import { MoneyInput } from '@/components/MoneyInput';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
+import { noBounce } from '@/constants/scroll';
 import type { Scope, Subscription } from '@/domain/types';
 import { useTheme } from '@/hooks/use-theme';
 import { useBudgetStore } from '@/store/useBudgetStore';
@@ -104,6 +105,7 @@ export function SubscriptionSheet({ visible, editing, onClose, onSave, onDelete 
             </View>
 
             <ScrollView
+              {...noBounce}
               contentContainerStyle={{ gap: Spacing.lg, paddingVertical: Spacing.md }}
               keyboardShouldPersistTaps="handled">
               <TextInput

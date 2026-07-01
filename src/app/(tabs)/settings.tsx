@@ -11,6 +11,7 @@ import { SectionTitle } from '@/components/SectionTitle';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { ThemedText } from '@/components/themed-text';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { noBounce } from '@/constants/scroll';
 import { hasSupabase } from '@/lib/env';
 import { setLanguage, type Language } from '@/lib/i18n';
 import { supabase } from '@/lib/supabase';
@@ -54,6 +55,7 @@ export default function SettingsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <ScrollView
+        {...noBounce}
         contentContainerStyle={[
           styles.content,
           { paddingTop: insets.top + Spacing.md, paddingBottom: insets.bottom + Spacing.xxl },

@@ -22,6 +22,7 @@ import { EmojiPicker } from '@/components/EmojiPicker';
 import { MoneyInput } from '@/components/MoneyInput';
 import { ThemedText } from '@/components/themed-text';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { noBounce } from '@/constants/scroll';
 import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/providers/AuthProvider';
@@ -169,6 +170,7 @@ export default function OnboardingScreen() {
         style={{ flex: 1 }}
         keyboardVerticalOffset={insets.top + 40}>
         <ScrollView
+          {...noBounce}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>

@@ -17,6 +17,7 @@ import { IconPicker } from '@/components/IconPicker';
 import { MoneyInput } from '@/components/MoneyInput';
 import { ThemedText } from '@/components/themed-text';
 import { CategoryPalette, Radius, Spacing } from '@/constants/theme';
+import { noBounce } from '@/constants/scroll';
 import { useTheme } from '@/hooks/use-theme';
 
 export type CustomCategoryDraft = {
@@ -79,6 +80,7 @@ export function CustomCategorySheet({ visible, onClose, onAdd }: Props) {
             </View>
 
             <ScrollView
+              {...noBounce}
               contentContainerStyle={{ gap: Spacing.lg, paddingVertical: Spacing.md }}
               keyboardShouldPersistTaps="handled">
               <TextInput

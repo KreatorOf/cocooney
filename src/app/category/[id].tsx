@@ -10,6 +10,7 @@ import { ProgressBar } from '@/components/ProgressBar';
 import { ThemedText } from '@/components/themed-text';
 import { TransactionRow } from '@/components/TransactionRow';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { noBounce } from '@/constants/scroll';
 import { spentInCategory } from '@/domain/selectors';
 import { useTheme } from '@/hooks/use-theme';
 import { useBudgetStore } from '@/store/useBudgetStore';
@@ -46,6 +47,7 @@ export default function CategoryDetailScreen() {
       </View>
 
       <ScrollView
+        {...noBounce}
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.xxl }]}
         showsVerticalScrollIndicator={false}>
         {category && (

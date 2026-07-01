@@ -10,6 +10,7 @@ import { SegmentedControl } from '@/components/SegmentedControl';
 import { ThemedText } from '@/components/themed-text';
 import { TransactionRow } from '@/components/TransactionRow';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { noBounce } from '@/constants/scroll';
 import { useTheme } from '@/hooks/use-theme';
 import { useBudgetStore } from '@/store/useBudgetStore';
 import { monthKey, monthLabel } from '@/utils/date';
@@ -78,6 +79,7 @@ export default function TransactionsScreen() {
       </View>
 
       <ScrollView
+        {...noBounce}
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.xxl }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>

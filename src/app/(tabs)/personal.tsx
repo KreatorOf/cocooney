@@ -5,7 +5,8 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BOTTOM_BAR_SPACE, BottomBar } from '@/components/BottomBar';
+import { AddFab } from '@/components/AddFab';
+import { BOTTOM_BAR_SPACE } from '@/components/BottomBar';
 import { Card } from '@/components/Card';
 import { EnvelopeRow } from '@/components/EnvelopeRow';
 import { MonthSwitcher } from '@/components/MonthSwitcher';
@@ -15,6 +16,7 @@ import { SectionTitle } from '@/components/SectionTitle';
 import { ThemedText } from '@/components/themed-text';
 import { TransactionRow } from '@/components/TransactionRow';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { noBounce } from '@/constants/scroll';
 import {
   personalShareOfShared,
   spentForScope,
@@ -27,7 +29,7 @@ import { formatCents } from '@/utils/money';
 
 function Reveal({ delay, children }: { delay: number; children: React.ReactNode }) {
   return (
-    <Animated.View entering={FadeInDown.duration(420).delay(delay).springify().damping(18)}>
+    <Animated.View entering={FadeInDown.duration(320).delay(delay)}>
       {children}
     </Animated.View>
   );
@@ -59,6 +61,7 @@ export default function PersonalScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <ScrollView
+        {...noBounce}
         contentContainerStyle={[
           styles.content,
           { paddingTop: insets.top + Spacing.md, paddingBottom: BOTTOM_BAR_SPACE },
@@ -186,10 +189,7 @@ export default function PersonalScreen() {
         </Reveal>
       </ScrollView>
 
-      <BottomBar
-        label={t('transaction.addExpense')}
-        onPress={() => router.push('/add-transaction?scope=personal')}
-      />
+      <AddFab expenseScope="personal" />
     </View>
   );
 }

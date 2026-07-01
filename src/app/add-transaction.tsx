@@ -18,6 +18,7 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { ThemedText } from '@/components/themed-text';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { noBounce } from '@/constants/scroll';
 import type { Scope, SplitRule } from '@/domain/types';
 import { useTheme } from '@/hooks/use-theme';
 import { useBudgetStore } from '@/store/useBudgetStore';
@@ -124,6 +125,7 @@ export default function AddTransactionScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}>
         <ScrollView
+          {...noBounce}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>

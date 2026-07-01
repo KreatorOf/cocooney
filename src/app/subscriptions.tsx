@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,6 +12,7 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { SubscriptionSheet } from '@/components/SubscriptionSheet';
 import { ThemedText } from '@/components/themed-text';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { noBounce } from '@/constants/scroll';
 import { subscriptionsTotal, upcomingSubscriptions } from '@/domain/selectors';
 import type { Subscription } from '@/domain/types';
 import { useTheme } from '@/hooks/use-theme';
@@ -32,6 +33,7 @@ export default function SubscriptionsScreen() {
   } = useBudgetStore();
 
   const { isPremium } = usePremium();
+  const params = useLocalSearchParams<{ new?: string }>();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<Subscription | null>(null);
 
@@ -47,6 +49,12 @@ export default function SubscriptionsScreen() {
     setSheetOpen(true);
   };
   const openEdit = (sub: Subscription) => { setEditing(sub); setSheetOpen(true); };
+
+  // Ouverture directe du formulaire d'ajout depuis le FAB (« /subscriptions?new=1 »).
+  useEffect(() => {
+    if (params.new === '1') openAdd();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const pay = (sub: Subscription) => {
     const account = accounts.find((a) =>
@@ -75,6 +83,7 @@ export default function SubscriptionsScreen() {
       </View>
 
       <ScrollView
+        {...noBounce}
         contentContainerStyle={[styles.content, { paddingBottom: BOTTOM_BAR_SPACE }]}
         showsVerticalScrollIndicator={false}>
         {/* Total mensuel */}

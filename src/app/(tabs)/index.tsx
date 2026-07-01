@@ -6,7 +6,8 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BOTTOM_BAR_SPACE, BottomBar } from '@/components/BottomBar';
+import { AddFab } from '@/components/AddFab';
+import { BOTTOM_BAR_SPACE } from '@/components/BottomBar';
 import { Card } from '@/components/Card';
 import { EnvelopeRow } from '@/components/EnvelopeRow';
 import { FilterChips, type FilterChip } from '@/components/FilterChips';
@@ -22,11 +23,11 @@ import {
   spentForScope,
   spentInCategory,
   subscriptionsTotal,
-  topCategories,
   totalBudget,
   upcomingSubscriptions,
 } from '@/domain/selectors';
 import type { Category, Transaction } from '@/domain/types';
+import { noBounce } from '@/constants/scroll';
 import { useTheme } from '@/hooks/use-theme';
 import { useBudgetStore } from '@/store/useBudgetStore';
 import { daysLeftInMonth, monthKey, relativeDay } from '@/utils/date';
@@ -34,10 +35,10 @@ import { formatCents } from '@/utils/money';
 import { MonthSwitcher } from '@/components/MonthSwitcher';
 import { CategoryIcon } from '@/components/CategoryIcon';
 
-/** Petit wrapper d'animation d'entrée, décalé selon l'ordre d'apparition. */
+/** Petit wrapper d'animation d'entrée (fondu net), décalé selon l'ordre d'apparition. */
 function Reveal({ delay, children }: { delay: number; children: React.ReactNode }) {
   return (
-    <Animated.View entering={FadeInDown.duration(420).delay(delay).springify().damping(18)}>
+    <Animated.View entering={FadeInDown.duration(320).delay(delay)}>
       {children}
     </Animated.View>
   );
@@ -52,7 +53,6 @@ export default function HouseholdScreen() {
     useBudgetStore();
   const isCurrentMonth = selectedMonth === currentMonth;
   const subTotal = subscriptionsTotal(subscriptions);
-  const nextSub = upcomingSubscriptions(subscriptions)[0];
 
   const sharedCategories = categories.filter((c) => c.scope === 'shared');
   const totalLimit = totalBudget(budgets, categories, 'shared', selectedMonth);
@@ -60,7 +60,6 @@ export default function HouseholdScreen() {
   const remaining = totalLimit - totalSpent;
   const daysLeft = daysLeftInMonth();
   const projected = isCurrentMonth && totalSpent > 0 ? projectedSpend(totalSpent) : null;
-  const top = topCategories(transactions, categories, 'shared', selectedMonth, 3);
 
   const me = members.find((m) => m.id === currentUserId);
   const partner = members.find((m) => m.id !== currentUserId);
@@ -69,7 +68,7 @@ export default function HouseholdScreen() {
 
   const recent = transactions
     .filter((t) => t.scope === 'shared' && monthKey(t.date) === selectedMonth)
-    .slice(0, 6);
+    .slice(0, 3);
   const memberName = (id: string) => members.find((m) => m.id === id)?.name ?? '?';
 
   // Enveloppes perso du partenaire — présentes seulement s'il a activé le partage.
@@ -96,6 +95,7 @@ export default function HouseholdScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <ScrollView
+        {...noBounce}
         contentContainerStyle={[
           styles.content,
           { paddingTop: insets.top + Spacing.md, paddingBottom: BOTTOM_BAR_SPACE },
@@ -119,18 +119,17 @@ export default function HouseholdScreen() {
           <FilterChips items={chips} selectedId={activeFilter} onSelect={setFilter} />
         </Reveal>
 
-        <Reveal delay={40}>
-          <MonthSwitcher />
-        </Reveal>
-
         {activeFilter === 'all' && (
           <>
-            {/* Carte « reste à vivre » */}
+            {/* Carte « reste à vivre » — mois intégré dans l'en-tête */}
             <Reveal delay={70}>
               <Card style={{ gap: Spacing.md }}>
-                <ThemedText type="small" themeColor="textSecondary">
-                  {isCurrentMonth ? t('household.remainingToLiveThisMonth') : t('household.remainingToLive')}
-                </ThemedText>
+                <View style={styles.heroHeader}>
+                  <MonthSwitcher inline />
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {isCurrentMonth ? t('household.remainingToLiveThisMonth') : t('household.remainingToLive')}
+                  </ThemedText>
+                </View>
                 <ThemedText style={styles.hero}>{formatCents(remaining)}</ThemedText>
                 <ProgressBar progress={totalLimit > 0 ? totalSpent / totalLimit : 0} height={10} />
                 <View style={styles.heroFooter}>
@@ -172,30 +171,6 @@ export default function HouseholdScreen() {
                 <InvitePill />
               )}
             </Reveal>
-
-            {/* Abonnements à venir */}
-            {subscriptions.length > 0 && (
-              <Reveal delay={160}>
-                <Pressable onPress={() => router.push('/subscriptions')}>
-                  <Card style={styles.subCard}>
-                    <View style={[styles.subIcon, { backgroundColor: theme.accentSoft }]}>
-                      <Ionicons name="repeat" size={20} color={theme.accent} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <ThemedText type="smallBold">
-                        {t('household.subsPerMonth', { amount: formatCents(subTotal) })}
-                      </ThemedText>
-                      {nextSub && (
-                        <ThemedText type="small" themeColor="textSecondary" style={{ fontSize: 12 }}>
-                          {t('household.nextSub', { name: nextSub.sub.name, when: relativeDay(nextSub.nextDate) })}
-                        </ThemedText>
-                      )}
-                    </View>
-                    <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
-                  </Card>
-                </Pressable>
-              </Reveal>
-            )}
 
             {/* Enveloppes */}
             <Reveal delay={190}>
@@ -251,37 +226,6 @@ export default function HouseholdScreen() {
               </Reveal>
             )}
 
-            {/* Top catégories du mois */}
-            {top.length > 0 && (
-              <Reveal delay={240}>
-                <View style={{ gap: Spacing.md }}>
-                  <SectionTitle>{t('household.whereMoneyGoes')}</SectionTitle>
-                  <Card style={{ gap: Spacing.md }}>
-                    {top.map(({ category, spentCents }) => (
-                      <View key={category.id} style={styles.topRow}>
-                        <CategoryIcon icon={category.icon} color={category.color} size={36} />
-                        <View style={{ flex: 1, gap: 6 }}>
-                          <View style={styles.heroFooter}>
-                            <ThemedText type="small" style={{ fontWeight: '600' }}>
-                              {category.name}
-                            </ThemedText>
-                            <ThemedText type="smallBold" style={styles.tnum}>
-                              {formatCents(spentCents)}
-                            </ThemedText>
-                          </View>
-                          <ProgressBar
-                            progress={top[0].spentCents > 0 ? spentCents / top[0].spentCents : 0}
-                            color={category.color}
-                            height={6}
-                          />
-                        </View>
-                      </View>
-                    ))}
-                  </Card>
-                </View>
-              </Reveal>
-            )}
-
             {/* Activité récente */}
             <Reveal delay={250}>
               <View style={{ gap: Spacing.md }}>
@@ -324,6 +268,7 @@ export default function HouseholdScreen() {
         {activeFilter === 'subscriptions' && (
           <Reveal delay={70}>
             <View style={{ gap: Spacing.md }}>
+              <MonthSwitcher />
               <Pressable onPress={() => router.push('/subscriptions')}>
                 <Card style={{ gap: Spacing.xs }}>
                   <ThemedText type="small" themeColor="textSecondary">{t('subscriptions.monthlyTotal')}</ThemedText>
@@ -376,10 +321,7 @@ export default function HouseholdScreen() {
         )}
       </ScrollView>
 
-      <BottomBar
-        label={t('transaction.addExpense')}
-        onPress={() => router.push('/add-transaction?scope=shared')}
-      />
+      <AddFab expenseScope="shared" />
     </View>
   );
 }
@@ -404,6 +346,9 @@ function FocusCategory({
   return (
     <>
       <Reveal delay={70}>
+        <MonthSwitcher />
+      </Reveal>
+      <Reveal delay={90}>
         <Card>
           <Pressable
             onPress={() => router.push(`/category/${category.id}`)}
@@ -538,6 +483,7 @@ const styles = StyleSheet.create({
   },
   hero: { fontSize: 40, fontWeight: '700', lineHeight: 46, fontVariant: ['tabular-nums'] },
   tnum: { fontVariant: ['tabular-nums'] },
+  heroHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   heroFooter: { flexDirection: 'row', justifyContent: 'space-between' },
   projection: {
     flexDirection: 'row',
@@ -548,8 +494,6 @@ const styles = StyleSheet.create({
   },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
   sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  subCard: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
-  subIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   balance: {
     flexDirection: 'row',
     alignItems: 'center',

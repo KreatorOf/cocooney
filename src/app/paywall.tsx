@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
+import { noBounce } from '@/constants/scroll';
 import { useTheme } from '@/hooks/use-theme';
 import { usePremium } from '@/providers/PremiumProvider';
 import { dateLocale } from '@/utils/date';
@@ -109,6 +110,7 @@ export default function PaywallScreen() {
       </Pressable>
 
       <ScrollView
+        {...noBounce}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.xxl, paddingBottom: insets.bottom + Spacing.lg }]}
         showsVerticalScrollIndicator={false}>
         <View style={[styles.logo, { backgroundColor: theme.accentSoft }]}>

@@ -25,6 +25,9 @@ export function FilterChips({ items, selectedId, onSelect }: Props) {
   return (
     <ScrollView
       horizontal
+      bounces={false}
+      alwaysBounceHorizontal={false}
+      overScrollMode="never"
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.content}>
       {items.map((item) => {
