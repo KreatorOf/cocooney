@@ -1,4 +1,11 @@
+import { useEffect } from 'react';
 import { View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -16,6 +23,14 @@ export function ProgressBar({ progress, color, height = 8 }: Props) {
   const over = progress > 1;
   const fill = over ? theme.danger : color ?? theme.accent;
 
+  const reduced = useReducedMotion();
+  const width = useSharedValue(clamped);
+  useEffect(() => {
+    width.value = reduced ? clamped : withTiming(clamped, { duration: 450 });
+  }, [clamped, reduced, width]);
+
+  const animatedStyle = useAnimatedStyle(() => ({ width: `${width.value * 100}%` }));
+
   return (
     <View
       style={{
@@ -24,13 +39,11 @@ export function ProgressBar({ progress, color, height = 8 }: Props) {
         backgroundColor: theme.track,
         overflow: 'hidden',
       }}>
-      <View
-        style={{
-          width: `${clamped * 100}%`,
-          height: '100%',
-          borderRadius: Radius.pill,
-          backgroundColor: fill,
-        }}
+      <Animated.View
+        style={[
+          { height: '100%', borderRadius: Radius.pill, backgroundColor: fill },
+          animatedStyle,
+        ]}
       />
     </View>
   );

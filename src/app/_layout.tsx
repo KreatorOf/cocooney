@@ -57,9 +57,15 @@ export default function RootLayout() {
                     name="edit-budgets"
                     options={{ presentation: 'modal', headerShown: false }}
                   />
-                  <Stack.Screen name="category/[id]" options={{ headerShown: false }} />
+                  <Stack.Screen
+                    name="category/[id]"
+                    options={{ headerShown: true, headerLargeTitle: true }}
+                  />
                   <Stack.Screen name="transactions" options={{ headerShown: false }} />
-                  <Stack.Screen name="subscriptions" options={{ headerShown: false }} />
+                  <Stack.Screen
+                    name="subscriptions"
+                    options={{ headerShown: true, headerLargeTitle: true }}
+                  />
                   <Stack.Screen
                     name="paywall"
                     options={{ presentation: 'modal', headerShown: false }}

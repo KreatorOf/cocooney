@@ -4,10 +4,11 @@ import { router, type Href } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Glass } from '@/components/Glass';
+import { Icon } from '@/components/Icon';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import type { Scope } from '@/domain/types';
@@ -48,9 +49,18 @@ export function AddFab({ expenseScope }: Props) {
     <>
       <Pressable
         onPress={openMenu}
+        accessibilityRole="button"
+        accessibilityLabel={t('common.add')}
         android_ripple={{ color: theme.onAccent + '33', borderless: false }}
-        style={[styles.fab, { backgroundColor: theme.accent, bottom, right: Spacing.lg }]}>
-        <Ionicons name="add" size={30} color={theme.onAccent} />
+        style={[styles.fab, { bottom, right: Spacing.lg }]}>
+        <Glass
+          glassEffectStyle="regular"
+          tintColor={theme.accent}
+          isInteractive
+          fallbackColor={theme.accent}
+          style={StyleSheet.absoluteFill}
+        />
+        <Icon sf="plus" ionicon="add" size={28} color={theme.onAccent} weight="bold" />
       </Pressable>
 
       <Modal visible={open} transparent animationType="none" onRequestClose={close}>
@@ -77,9 +87,18 @@ export function AddFab({ expenseScope }: Props) {
 
           <Pressable
             onPress={close}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close')}
             android_ripple={{ color: theme.onAccent + '33', borderless: false }}
-            style={[styles.fabInline, { backgroundColor: theme.accent }]}>
-            <Ionicons name="close" size={28} color={theme.onAccent} />
+            style={styles.fabInline}>
+            <Glass
+              glassEffectStyle="regular"
+              tintColor={theme.accent}
+              isInteractive
+              fallbackColor={theme.accent}
+              style={StyleSheet.absoluteFill}
+            />
+            <Icon sf="xmark" ionicon="close" size={24} color={theme.onAccent} weight="bold" />
           </Pressable>
         </View>
       </Modal>
@@ -99,20 +118,25 @@ function Action({
   onPress: () => void;
 }) {
   const theme = useTheme();
-  return (
-    <Animated.View entering={FadeInDown.duration(220).delay(delay)}>
-      <Pressable onPress={onPress} style={({ pressed }) => pressed && { opacity: 0.7 }}>
-        <Glass glassEffectStyle="regular" fallbackColor={theme.card} style={[styles.action, { borderColor: theme.border }]}>
-          <ThemedText type="smallBold" style={{ color: theme.text }}>
-            {label}
-          </ThemedText>
-          <View style={[styles.actionIcon, { backgroundColor: theme.accentSoft }]}>
-            <Ionicons name={icon} size={20} color={theme.accent} />
-          </View>
-        </Glass>
-      </Pressable>
-    </Animated.View>
+  const reduced = useReducedMotion();
+  const inner = (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => (pressed ? { opacity: 0.7 } : null)}>
+      <Glass glassEffectStyle="regular" fallbackColor={theme.card} style={[styles.action, { borderColor: theme.cardBorder }]}>
+        <ThemedText type="smallBold" style={{ color: theme.text }}>
+          {label}
+        </ThemedText>
+        <View style={[styles.actionIcon, { backgroundColor: theme.accentSoft }]}>
+          <Ionicons name={icon} size={20} color={theme.accent} />
+        </View>
+      </Glass>
+    </Pressable>
   );
+  if (reduced) return inner;
+  return <Animated.View entering={FadeInDown.duration(220).delay(delay)}>{inner}</Animated.View>;
 }
 
 const styles = StyleSheet.create({

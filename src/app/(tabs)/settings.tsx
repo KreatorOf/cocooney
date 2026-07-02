@@ -299,7 +299,7 @@ function Row({
 
 function Divider() {
   const theme = useTheme();
-  return <View style={{ height: 1, backgroundColor: theme.border, marginLeft: 56 }} />;
+  return <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.separator, marginLeft: 56 }} />;
 }
 
 const styles = StyleSheet.create({

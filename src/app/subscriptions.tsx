@@ -1,14 +1,13 @@
-import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BOTTOM_BAR_SPACE, BottomBar } from '@/components/BottomBar';
 import { Card } from '@/components/Card';
 import { CategoryIcon } from '@/components/CategoryIcon';
+import { EmptyState } from '@/components/EmptyState';
 import { SubscriptionSheet } from '@/components/SubscriptionSheet';
 import { ThemedText } from '@/components/themed-text';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
@@ -26,7 +25,6 @@ const FREE_SUB_LIMIT = 3;
 export default function SubscriptionsScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
-  const insets = useSafeAreaInsets();
   const {
     subscriptions, accounts, currentUserId,
     addSubscription, updateSubscription, deleteSubscription, addTransaction,
@@ -74,22 +72,17 @@ export default function SubscriptionsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.back}>
-          <Ionicons name="chevron-back" size={24} color={theme.text} />
-        </Pressable>
-        <ThemedText type="smallBold" style={{ flex: 1, textAlign: 'center' }}>{t('subscriptions.title')}</ThemedText>
-        <View style={styles.back} />
-      </View>
+      <Stack.Screen options={{ title: t('subscriptions.title') }} />
 
       <ScrollView
         {...noBounce}
+        contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={[styles.content, { paddingBottom: BOTTOM_BAR_SPACE }]}
         showsVerticalScrollIndicator={false}>
         {/* Total mensuel */}
         <Card style={{ gap: Spacing.xs }}>
           <ThemedText type="small" themeColor="textSecondary">{t('subscriptions.monthlyTotal')}</ThemedText>
-          <ThemedText style={styles.hero}>{formatCents(total)}</ThemedText>
+          <ThemedText rounded style={styles.hero}>{formatCents(total)}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {t('subscriptions.activeCount', { count: subscriptions.filter((s) => s.active).length })}
           </ThemedText>
@@ -129,13 +122,16 @@ export default function SubscriptionsScreen() {
         <SectionTitle>{t('subscriptions.all')}</SectionTitle>
         <Card>
           {subscriptions.length === 0 ? (
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('subscriptions.empty')}
-            </ThemedText>
+            <EmptyState
+              icon="repeat"
+              title={t('subscriptions.empty')}
+              actionLabel={t('subscriptions.add')}
+              onAction={openAdd}
+            />
           ) : (
             subscriptions.map((sub, i) => (
               <View key={sub.id}>
-                {i > 0 && <View style={{ height: 1, backgroundColor: theme.border, marginVertical: 2 }} />}
+                {i > 0 && <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.separator, marginLeft: 56 }} />}
                 <Pressable onPress={() => openEdit(sub)} style={({ pressed }) => [styles.listRow, pressed && { opacity: 0.6 }]}>
                   <CategoryIcon icon={sub.icon} color={sub.color} size={42} />
                   <View style={{ flex: 1 }}>
@@ -179,8 +175,6 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.lg, paddingBottom: Spacing.sm },
-  back: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   content: {
     padding: Spacing.lg,
     gap: Spacing.md,

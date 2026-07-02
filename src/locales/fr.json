@@ -18,6 +18,7 @@
     "errorOccurred": "Une erreur est survenue.",
     "soon": "Bientôt",
     "private": "Privé",
+    "close": "Fermer",
     "currency": "€"
   },
   "tabs": {
@@ -26,7 +27,9 @@
     "settings": "Réglages"
   },
   "monthSwitcher": {
-    "backToToday": "Revenir à aujourd'hui"
+    "backToToday": "Revenir à aujourd'hui",
+    "prev": "Mois précédent",
+    "next": "Mois suivant"
   },
   "filters": {
     "all": "Tout",

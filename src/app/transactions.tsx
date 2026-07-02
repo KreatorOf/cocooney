@@ -6,6 +6,7 @@ import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Card } from '@/components/Card';
+import { EmptyState } from '@/components/EmptyState';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { ThemedText } from '@/components/themed-text';
 import { TransactionRow } from '@/components/TransactionRow';
@@ -85,15 +86,13 @@ export default function TransactionsScreen() {
         showsVerticalScrollIndicator={false}>
         <Card>
           {list.length === 0 ? (
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('transactions.noTransaction')}
-            </ThemedText>
+            <EmptyState icon="receipt-outline" title={t('transactions.noTransaction')} />
           ) : (
             list.map((tx, i) => {
               const cat = categories.find((c) => c.id === tx.categoryId);
               return (
                 <View key={tx.id}>
-                  {i > 0 && <View style={{ height: 1, backgroundColor: theme.border, marginVertical: 2 }} />}
+                  {i > 0 && <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.separator, marginLeft: 56 }} />}
                   <TransactionRow
                     tx={tx}
                     category={cat}

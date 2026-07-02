@@ -2,12 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AddFab } from '@/components/AddFab';
 import { BOTTOM_BAR_SPACE } from '@/components/BottomBar';
 import { Card } from '@/components/Card';
+import { EmptyState } from '@/components/EmptyState';
 import { EnvelopeRow } from '@/components/EnvelopeRow';
 import { MonthSwitcher } from '@/components/MonthSwitcher';
 import { ProgressBar } from '@/components/ProgressBar';
@@ -28,6 +29,8 @@ import { monthKey } from '@/utils/date';
 import { formatCents } from '@/utils/money';
 
 function Reveal({ delay, children }: { delay: number; children: React.ReactNode }) {
+  const reduced = useReducedMotion();
+  if (reduced) return <>{children}</>;
   return (
     <Animated.View entering={FadeInDown.duration(320).delay(delay)}>
       {children}
@@ -100,7 +103,7 @@ export default function PersonalScreen() {
                 </View>
               )}
             </View>
-            <ThemedText style={[styles.hero, { color: savings >= 0 ? theme.text : theme.danger }]}>
+            <ThemedText rounded style={[styles.hero, { color: savings >= 0 ? theme.text : theme.danger }]}>
               {income > 0 ? formatCents(savings) : formatCents(totalSpent)}
             </ThemedText>
             {income > 0 && <ProgressBar progress={totalSpent / income} height={8} />}
@@ -166,9 +169,7 @@ export default function PersonalScreen() {
             </View>
             <Card>
               {myTx.length === 0 ? (
-                <ThemedText type="small" themeColor="textSecondary">
-                  {t('personal.noPersonalExpense')}
-                </ThemedText>
+                <EmptyState icon="wallet-outline" title={t('personal.noPersonalExpense')} />
               ) : (
                 myTx.map((tx, i) => {
                   const cat = categories.find((c) => c.id === tx.categoryId);
@@ -209,7 +210,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 function Divider() {
   const theme = useTheme();
-  return <View style={{ height: 1, backgroundColor: theme.border, marginVertical: 2 }} />;
+  return <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.separator, marginLeft: 56 }} />;
 }
 
 const styles = StyleSheet.create({

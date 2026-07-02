@@ -10,12 +10,18 @@ import { Platform } from 'react-native';
 export const Colors = {
   light: {
     text: '#11121A',
-    textSecondary: '#6B7280',
+    textSecondary: '#5B616E',
+    textTertiary: '#9CA3AF',
     background: '#F4F5F7',
     card: '#FFFFFF',
     backgroundElement: '#EEF0F4',
     backgroundSelected: '#E3E6EC',
+    fill: '#EEF0F4',
+    fillSecondary: '#F1F2F5',
     border: '#E7E8EE',
+    separator: '#E3E4EA',
+    /** Bordure de carte : transparente en clair (on s'appuie sur l'ombre). */
+    cardBorder: 'transparent',
     accent: '#6457F9',
     accentSoft: '#ECEBFE',
     onAccent: '#FFFFFF',
@@ -27,11 +33,17 @@ export const Colors = {
   dark: {
     text: '#F5F5F7',
     textSecondary: '#9A9AA8',
+    textTertiary: '#6B6B78',
     background: '#0B0B0F',
     card: '#16161C',
     backgroundElement: '#202028',
     backgroundSelected: '#2A2A33',
+    fill: '#202028',
+    fillSecondary: '#1B1B22',
     border: '#26262E',
+    separator: '#26262E',
+    /** Bordure de carte : hairline en sombre (l'ombre y est invisible). */
+    cardBorder: '#26262E',
     accent: '#8B80FF',
     accentSoft: '#211F3A',
     onAccent: '#FFFFFF',

@@ -105,6 +105,8 @@ export default function PaywallScreen() {
       <Pressable
         onPress={() => router.back()}
         hitSlop={12}
+        accessibilityRole="button"
+        accessibilityLabel={t('common.close')}
         style={[styles.close, { top: insets.top + Spacing.sm }]}>
         <Ionicons name="close" size={26} color={theme.textSecondary} />
       </Pressable>

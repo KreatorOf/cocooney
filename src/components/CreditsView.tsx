@@ -7,6 +7,7 @@ import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Card } from '@/components/Card';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { CreditSheet } from '@/components/CreditSheet';
+import { EmptyState } from '@/components/EmptyState';
 import { ProgressBar } from '@/components/ProgressBar';
 import { SectionTitle } from '@/components/SectionTitle';
 import { ThemedText } from '@/components/themed-text';
@@ -49,7 +50,7 @@ export function CreditsView() {
       <Card style={styles.summary}>
         <View style={{ flex: 1, gap: 2 }}>
           <ThemedText type="small" themeColor="textSecondary">{t('credits.remainingTotal')}</ThemedText>
-          <ThemedText style={styles.hero}>{formatCents(creditsRemainingTotal(credits))}</ThemedText>
+          <ThemedText rounded style={styles.hero}>{formatCents(creditsRemainingTotal(credits))}</ThemedText>
         </View>
         <View style={{ alignItems: 'flex-end', gap: 2 }}>
           <ThemedText type="small" themeColor="textSecondary">{t('credits.monthlyTotal')}</ThemedText>
@@ -60,20 +61,26 @@ export function CreditsView() {
       <SectionTitle>{t('credits.title')}</SectionTitle>
       <Card>
         {credits.length === 0 ? (
-          <ThemedText type="small" themeColor="textSecondary">{t('credits.empty')}</ThemedText>
+          <EmptyState
+            icon="card-outline"
+            title={t('credits.empty')}
+            actionLabel={t('credits.add')}
+            onAction={openAdd}
+          />
         ) : (
-          credits.map((c, i) => (
-            <View key={c.id}>
-              {i > 0 && <View style={{ height: 1, backgroundColor: theme.border, marginVertical: Spacing.sm }} />}
-              <CreditRow credit={c} onEdit={() => openEdit(c)} onPay={() => pay(c)} />
-            </View>
-          ))
+          <>
+            {credits.map((c, i) => (
+              <View key={c.id}>
+                {i > 0 && <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.separator, marginVertical: Spacing.md }} />}
+                <CreditRow credit={c} onEdit={() => openEdit(c)} onPay={() => pay(c)} />
+              </View>
+            ))}
+            <Pressable onPress={openAdd} accessibilityRole="button" style={styles.add}>
+              <Ionicons name="add-circle-outline" size={20} color={theme.accent} />
+              <ThemedText type="smallBold" style={{ color: theme.accent }}>{t('credits.add')}</ThemedText>
+            </Pressable>
+          </>
         )}
-
-        <Pressable onPress={openAdd} style={styles.add}>
-          <Ionicons name="add-circle-outline" size={20} color={theme.accent} />
-          <ThemedText type="smallBold" style={{ color: theme.accent }}>{t('credits.add')}</ThemedText>
-        </Pressable>
       </Card>
 
       <CreditSheet

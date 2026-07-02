@@ -1,9 +1,9 @@
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Glass } from '@/components/Glass';
+import { Icon } from '@/components/Icon';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -33,8 +33,19 @@ export function MonthSwitcher({ inline }: { inline?: boolean }) {
 
   const content = (
     <>
-      <Pressable onPress={goBack} hitSlop={8} android_ripple={ripple} style={styles.btn}>
-        <Ionicons name={isPremium ? 'chevron-back' : 'lock-closed'} size={isPremium ? 18 : 15} color={theme.text} />
+      <Pressable
+        onPress={goBack}
+        hitSlop={8}
+        android_ripple={ripple}
+        accessibilityRole="button"
+        accessibilityLabel={t('monthSwitcher.prev')}
+        style={styles.btn}>
+        <Icon
+          sf={isPremium ? 'chevron.left' : 'lock.fill'}
+          ionicon={isPremium ? 'chevron-back' : 'lock-closed'}
+          size={isPremium ? 18 : 15}
+          color={theme.text}
+        />
       </Pressable>
       <Pressable
         onPress={() => !atCurrent && setSelectedMonth(currentMonth)}
@@ -53,8 +64,10 @@ export function MonthSwitcher({ inline }: { inline?: boolean }) {
         disabled={atCurrent}
         hitSlop={8}
         android_ripple={ripple}
+        accessibilityRole="button"
+        accessibilityLabel={t('monthSwitcher.next')}
         style={[styles.btn, atCurrent && { opacity: 0.3 }]}>
-        <Ionicons name="chevron-forward" size={18} color={theme.text} />
+        <Icon sf="chevron.right" ionicon="chevron-forward" size={18} color={theme.text} />
       </Pressable>
     </>
   );

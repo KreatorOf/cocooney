@@ -3,13 +3,14 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AddFab } from '@/components/AddFab';
 import { BOTTOM_BAR_SPACE } from '@/components/BottomBar';
 import { Card } from '@/components/Card';
 import { CreditsView } from '@/components/CreditsView';
+import { EmptyState } from '@/components/EmptyState';
 import { EnvelopeRow } from '@/components/EnvelopeRow';
 import { FilterChips, type FilterChip } from '@/components/FilterChips';
 import { ProgressBar } from '@/components/ProgressBar';
@@ -34,6 +35,8 @@ import { MonthSwitcher } from '@/components/MonthSwitcher';
 
 /** Petit wrapper d'animation d'entrée (fondu net), décalé selon l'ordre d'apparition. */
 function Reveal({ delay, children }: { delay: number; children: React.ReactNode }) {
+  const reduced = useReducedMotion();
+  if (reduced) return <>{children}</>;
   return (
     <Animated.View entering={FadeInDown.duration(320).delay(delay)}>
       {children}
@@ -122,7 +125,7 @@ export default function HouseholdScreen() {
                     {isCurrentMonth ? t('household.remainingToLiveThisMonth') : t('household.remainingToLive')}
                   </ThemedText>
                 </View>
-                <ThemedText style={styles.hero}>{formatCents(remaining)}</ThemedText>
+                <ThemedText rounded style={styles.hero}>{formatCents(remaining)}</ThemedText>
                 <ProgressBar progress={totalLimit > 0 ? totalSpent / totalLimit : 0} height={10} />
                 <View style={styles.heroFooter}>
                   <ThemedText type="small" themeColor="textSecondary" style={styles.tnum}>
@@ -231,9 +234,7 @@ export default function HouseholdScreen() {
                 </View>
                 <Card>
                   {recent.length === 0 ? (
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {t('household.noExpenseYet')}
-                    </ThemedText>
+                    <EmptyState icon="receipt-outline" title={t('household.noExpenseYet')} />
                   ) : (
                     recent.map((tx, i) => {
                       const cat = categories.find((c) => c.id === tx.categoryId);
@@ -348,7 +349,7 @@ function InvitePill() {
 
 function Divider() {
   const theme = useTheme();
-  return <View style={{ height: 1, backgroundColor: theme.border, marginVertical: 2 }} />;
+  return <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.separator, marginLeft: 56 }} />;
 }
 
 const styles = StyleSheet.create({

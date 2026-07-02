@@ -18,6 +18,7 @@
     "errorOccurred": "Something went wrong.",
     "soon": "Soon",
     "private": "Private",
+    "close": "Close",
     "currency": "€"
   },
   "tabs": {
@@ -26,7 +27,9 @@
     "settings": "Settings"
   },
   "monthSwitcher": {
-    "backToToday": "Back to today"
+    "backToToday": "Back to today",
+    "prev": "Previous month",
+    "next": "Next month"
   },
   "filters": {
     "all": "All",

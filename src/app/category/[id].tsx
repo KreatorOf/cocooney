@@ -1,7 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Card } from '@/components/Card';
@@ -36,24 +35,17 @@ export default function CategoryDetailScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.back}>
-          <Ionicons name="chevron-back" size={24} color={theme.text} />
-        </Pressable>
-        <ThemedText type="smallBold" numberOfLines={1} style={{ flex: 1, textAlign: 'center' }}>
-          {category?.name ?? t('category.envelope')}
-        </ThemedText>
-        <View style={styles.back} />
-      </View>
+      <Stack.Screen options={{ title: category?.name ?? t('category.envelope') }} />
 
       <ScrollView
         {...noBounce}
+        contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.xxl }]}
         showsVerticalScrollIndicator={false}>
         {category && (
           <Card style={{ gap: Spacing.md, alignItems: 'center' }}>
             <CategoryIcon icon={category.icon} color={category.color} size={56} />
-            <ThemedText style={styles.hero}>{formatCents(Math.abs(remaining))}</ThemedText>
+            <ThemedText rounded style={styles.hero}>{formatCents(Math.abs(remaining))}</ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
               {remaining < 0 ? t('category.over') : t('category.remaining')} · {monthLabel(selectedMonth)}
             </ThemedText>
@@ -82,7 +74,7 @@ export default function CategoryDetailScreen() {
           ) : (
             txs.map((tx, i) => (
               <View key={tx.id}>
-                {i > 0 && <View style={{ height: 1, backgroundColor: theme.border, marginVertical: 2 }} />}
+                {i > 0 && <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.separator, marginLeft: 56 }} />}
                 <TransactionRow
                   tx={tx}
                   category={category}
@@ -99,13 +91,6 @@ export default function CategoryDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.sm,
-  },
-  back: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   content: {
     padding: Spacing.lg,
     gap: Spacing.md,

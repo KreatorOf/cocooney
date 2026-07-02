@@ -25,7 +25,7 @@ export function Card({ style, padded = true, ...rest }: Props) {
           backgroundColor: theme.card,
           borderRadius: Radius.lg,
           borderWidth: 1,
-          borderColor: theme.border,
+          borderColor: theme.cardBorder,
           padding: padded ? Spacing.lg : 0,
         },
         cardShadow,
